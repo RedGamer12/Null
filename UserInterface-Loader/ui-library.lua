@@ -134,7 +134,7 @@ Toggle.Position = UDim2.new(0, 5, 0, -2)
 Toggle.Rotation = 90
 Toggle.Size = UDim2.new(0, 20, 0, 20)
 Toggle.ZIndex = 2
-Toggle.Image = "https://www.roblox.com/Thumbs/Asset.ashx?width=420&height=420&assetId=4731371541"
+Toggle.Image = "rbxassetid://4731371527"
 
 Base.Name = "Base"
 Base.Parent = Bar
@@ -339,7 +339,7 @@ Indicator_2.Position = UDim2.new(0.899999976, -10, 0.100000001, 0)
 Indicator_2.Rotation = -90
 Indicator_2.Size = UDim2.new(0, 15, 0, 15)
 Indicator_2.ZIndex = 2
-Indicator_2.Image = "https://www.roblox.com/Thumbs/Asset.ashx?width=420&height=420&assetId=4744658743"
+Indicator_2.Image = "rbxassetid://4744658732"
 
 Box.Name = "Box"
 Box.Parent = Dropdown
@@ -439,7 +439,7 @@ Toggle_2.BackgroundColor3 = Color3.new(1, 1, 1)
 Toggle_2.BackgroundTransparency = 1
 Toggle_2.Position = UDim2.new(0, 5, 0, 0)
 Toggle_2.Size = UDim2.new(0, 20, 0, 20)
-Toggle_2.Image = "https://www.roblox.com/Thumbs/Asset.ashx?width=420&height=420&assetId=4731371541"
+Toggle_2.Image = "rbxassetid://4731371527"
 
 Objects_2.Name = "Objects"
 Objects_2.Parent = Folder
@@ -795,6 +795,35 @@ Windows.BackgroundTransparency = 1
 Windows.Position = UDim2.new(0, 20, 0, 20)
 Windows.Size = UDim2.new(1, 20, 1, -20)
 
+
+--[[ PreloadAsync detection bypass ]]--
+local oldnmc
+local contentProvider = game:GetService("ContentProvider")
+
+oldnmc = hookmetamethod(game, "__namecall", function(self, ...)
+    local args = {...}
+    local method = getnamecallmethod()
+
+    if self == contentProvider and (method == "PreloadAsync" or method == "preloadAsync") and table.find(args[1], game.CoreGui) then
+        return {}
+    end
+
+    return oldnmc(self, ...)
+end)
+
+local oldf
+
+oldf = hookfunction(contentProvider.PreloadAsync, function(self, ...)
+    local args = {...}
+
+    if table.find(args[1], game.CoreGui) then
+        return {}
+    end
+
+    return oldf(self, ...)
+end)
+
+
 --[[ Script ]]--
 script.Parent = imgui
 
@@ -812,16 +841,6 @@ local Windows = script.Parent:FindFirstChild("Windows")
 local checks = {
 	["binding"] = false,
 }
-
-UIS.InputBegan:Connect(function(input, gameProcessed)
-	if input.KeyCode == ((typeof(ui_options.toggle_key) == "EnumItem") and ui_options.toggle_key or Enum.KeyCode.RightShift) then
-		if script.Parent then
-			if not checks.binding then
-				script.Parent.Enabled = not script.Parent.Enabled
-			end
-		end
-	end
-end)
 
 local function Resize(part, new, _delay)
 	_delay = _delay or 0.5
@@ -870,6 +889,99 @@ local function hasprop(object, prop)
 		return b
 	end
 end
+
+------------------ change prop without firing events by kitfisco on v3rm ------------------------------
+local InstCons = {}
+do
+    local rawsett
+    rawsett = hookmetamethod(game,"__newindex",newcclosure(function(...)return rawsett(...)end))
+
+    local rawgett
+    rawgett = hookmetamethod(game,"__index",newcclosure(function(...)return rawgett(...)end))
+
+    local function GetParents(Obj)
+        local Parent, Parents = Obj, {}
+        if typeof(Obj) == "Instance" then
+            repeat
+                Parents[#Parents+1] = Parent
+                Parent = rawgett(Parent, "Parent")
+            until not Parent
+        end
+        return Parents
+    end
+
+    getgenv().setrawproperty = function(Obj, Property, Value)
+        assert(typeof(Obj) == "Instance", string.format("Invalid argument #1 (Instance expected, got %s)", typeof(Obj)))
+
+        local Connections = {}
+        for _,v in pairs({unpack(GetParents(Obj)), unpack(GetParents(Value))}) do
+            if InstCons[v] then
+                for Signal,_ in pairs(InstCons[v]) do
+                    for _,Connection in pairs(getconnections(Signal)) do
+                        if Connection.Enabled and Connection.Function ~= nil and Connection.State ~= nil then
+                            Connections[#Connections+1] = Connection
+                            Connection:Disable()
+                        end
+                    end
+                end
+            end
+        end
+
+        rawsett(Obj, Property, Value)
+
+        for _,v in pairs(Connections) do
+            v:Enable()
+        end
+    end
+end
+
+do
+    local OldNamecall
+    OldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(...)
+        local Args = {...}
+        local Self = Args[1]
+        if Self ~= nil and typeof(Self) == "Instance" then
+            local success, output = pcall(function()
+                return Self[getnamecallmethod()]
+            end)
+
+            if success and type(output) == "function" then
+                local Result = {OldNamecall(...)}
+                for _,v in pairs(Result) do
+                    if typeof(v) == "RBXScriptSignal" then
+                        if not InstCons[Self] then
+                            InstCons[Self] = {}
+                        end
+                        InstCons[Self][v] = v
+                    end
+                end
+
+                return unpack(Result)
+            end
+        end
+        return OldNamecall(...)
+    end))
+end
+
+local OldIndex
+OldIndex = hookmetamethod(game, "__index", newcclosure(function(...)
+    local Args = {...}
+    local Self = Args[1]
+    if Self ~= nil and typeof(Self) == "Instance" then
+        local Result = {OldIndex(...)}
+        for _,v in pairs(Result) do
+            if typeof(v) == "RBXScriptSignal" then
+                if not InstCons[Self] then
+                    InstCons[Self] = {}
+                end
+                InstCons[Self][v] = v
+            end
+        end
+        return unpack(Result)
+    end
+    return OldIndex(...)
+end))
+-----------------------------------------------------
 
 local function gNameLen(obj)
 	return obj.TextBounds.X + 15
@@ -1881,6 +1993,12 @@ function library:AddWindow(title, options)
 								return Source.Text
 							end
 
+							function console_data:OnChange(callback)
+							    Source:GetPropertyChangedSignal("Text"):Connect(function()
+								callback(Source.Text)
+							    end)
+							end
+
 							function console_data:Log(msg)
 								Source.Text = Source.Text .. "[*] " .. tostring(msg) .. "\n"
 							end
@@ -2009,84 +2127,4 @@ function library:AddWindow(title, options)
 	return window_data, Window
 end
 
-do -- Example UI
-	local Window = library:AddWindow("Preview", {
-		main_color = Color3.fromRGB(41, 74, 122),
-		min_size = Vector2.new(500, 600),
-		toggle_key = Enum.KeyCode.RightShift,
-		can_resize = true,
-	})
-	local Tab = Window:AddTab("Tab 1")
-
-	do -- Elements
-		Tab:AddLabel("Hello World!")
-
-		Tab:AddButton("Button", function()
-			print("Button clicked.")
-		end)
-
-		Tab:AddTextBox("TextBox", function(text)
-			print(text)
-		end, {
-			["clear"] = false, -- Default: true (options are optional)
-		})
-
-		local Switch = Tab:AddSwitch("Switch", function(bool)
-			print(bool)
-		end)
-		Switch:Set(true)
-
-		local Slider = Tab:AddSlider("Slider", function(x)
-			print(x)
-		end, { -- (options are optional)
-			["min"] = 0, -- Default: 0
-			["max"] = 100, -- Default: 100
-			["readonly"] = false, -- Default: false
-		})
-		Slider:Set(50)
-
-		Tab:AddKeybind("Keybind", function(key)
-			print(key)
-		end, { -- (options are optional)
-			["standard"] = Enum.KeyCode.RightShift -- Default: RightShift
-		})
-
-		local Dropdown = Tab:AddDropdown("Dropdown", function(object)
-			print(object)
-		end)
-		for i = 1, 9 do
-			Dropdown:Add(tostring(i))
-		end
-		local obj = Dropdown:Add("10")
-		obj:Remove()
-
-		local CP = Tab:AddColorPicker(function(color)
-			print(color)
-		end)
-		CP:Set(Color3.new(1, 0, 0))
-
-		local Console = Tab:AddConsole({
-			["y"] = 100,
-			["source"] = "Lua",
-		})
-		Console:Set("-- Gamer time!\nfor i = 1, 9 do \n    print(i)\nend")
-		print(Console:Get())
-
-		local HA = Tab:AddHorizontalAlignment()
-		HA:AddButton("Execute", function()
-			loadstring(Console:Get())()
-		end)
-		HA:AddButton("Clear", function()
-			Console:Set("")
-		end)
-
-		local Folder = Tab:AddFolder("Folder") -- This can contain exactly the same as a Tab. You can have as many folders as you'd like to.
-		Folder:AddLabel("Hello")
-		local Folder2 = Folder:AddFolder("?")
-		Folder2:AddLabel("Woo!")
-
-	end
-
-	Tab:Show()
-	library:FormatWindows()
-end
+return library

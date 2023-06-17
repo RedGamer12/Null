@@ -1260,11 +1260,6 @@ function library:AddWindow(title, options)
                                     break
                                 end
                             end
-                        
-                            -- Cập nhật lại giá trị cho label mới
-                            if label.Text == "" then
-                                label.Text = "New Label"
-                            end
                         end
                     
                         return label

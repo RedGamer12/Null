@@ -1242,18 +1242,29 @@ function library:AddWindow(title, options)
 
 				do -- Tab Elements
 
-					function tab_data:AddLabel(label_text) -- [Label]
-						label_text = tostring(label_text or "New Label")
-
-						local label = Prefabs:FindFirstChild("Label"):Clone()
-
-						label.Parent = new_tab
-						label.Text = label_text
-						label.Size = UDim2.new(0, gNameLen(label), 0, 20)
-						label.ZIndex = label.ZIndex + (windows * 10)
-
-						return label
-					end
+					function tab_data:AddLabel(label_text)
+                        label_text = tostring(label_text or "New Label")
+                    
+                        local label = Prefabs:FindFirstChild("Label"):Clone()
+                    
+                        label.Parent = new_tab
+                        label.Text = label_text
+                        label.Size = UDim2.new(0, gNameLen(label), 0, 20)
+                        label.ZIndex = label.ZIndex + (windows * 10)
+                    
+                        -- Nếu label_text không được cung cấp hoặc bị bỏ trống thì tự động tìm kiếm label
+                        if not label_text or label_text == "" then
+                            label.Name = "AutoLabel"
+                            for _, v in pairs(new_tab:GetChildren()) do
+                                if v:IsA("TextLabel") and v.Name == "AutoLabel" then
+                                    label = v
+                                    break
+                                end
+                            end
+                        end
+                    
+                        return label
+                    end
 
 					function tab_data:AddButton(button_text, callback) -- [Button]
 						button_text = tostring(button_text or "New Button")

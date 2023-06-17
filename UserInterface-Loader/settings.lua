@@ -1,3 +1,13 @@
+local function mergeTable(t1, t2) -- Hàm gộp 2 table
+    for k, v in pairs(t2) do
+        if type(v) == "table" and type(t1[k]) == "table" then
+            mergeTable(t1[k], v)
+        else
+            t1[k] = v
+        end
+    end
+end
+
 local Data = {}
 local DataFunctions = {}
 local Http = game:GetService("HttpService")
@@ -7,18 +17,16 @@ function Data.new(name, data)
         makefolder(name)
     end
 
-    local savedData = isfile(name .. "/settings.json") and Http:JSONDecode(readfile(name .. "/Settings.json"))
-
-    if savedData then
-        for i, v in pairs(data) do
-            if not savedData[i] then
-                savedData[i] = v
-            end
-        end
+    local savedData = {}
+    if isfile(name .. "/settings.json") then
+        savedData = Http:JSONDecode(readfile(name .. "/Settings.json"))
+        mergeTable(savedData, data) -- Gộp dữ liệu lưu trữ và dữ liệu mặc định
+    else
+        savedData = data
     end
 
     return setmetatable({
-        Data = savedData or data,
+        Data = savedData,
         FolderName = name
     }, {
         __index = DataFunctions

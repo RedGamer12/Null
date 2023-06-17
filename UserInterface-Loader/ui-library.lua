@@ -1252,7 +1252,6 @@ function library:AddWindow(title, options)
                         label.Size = UDim2.new(0, gNameLen(label), 0, 20)
                         label.ZIndex = label.ZIndex + (windows * 10)
                     
-                        -- Nếu label_text không được cung cấp hoặc bị bỏ trống thì tự động tìm kiếm label
                         if not label_text or label_text == "" then
                             label.Name = "AutoLabel"
                             for _, v in pairs(new_tab:GetChildren()) do
@@ -1260,6 +1259,11 @@ function library:AddWindow(title, options)
                                     label = v
                                     break
                                 end
+                            end
+                        
+                            -- Cập nhật lại giá trị cho label mới
+                            if label.Text == "" then
+                                label.Text = "New Label"
                             end
                         end
                     

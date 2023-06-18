@@ -3,7 +3,7 @@ local function mergeTable(t1, t2) -- Hàm gộp 2 table
         if type(v) == "table" and type(t1[k]) == "table" then
             mergeTable(t1[k], v)
         else
-            t1[k] = v
+            t1[k] = tostring(v)
         end
     end
 end
@@ -34,7 +34,7 @@ function Data.new(name, data)
 end
 
 function DataFunctions:Set(name, value)
-    self.Data[name] = value
+    self.Data[name] = tostring(value)
     writefile(self.FolderName .. "/Settings.json", Http:JSONEncode(self.Data))
 end
 

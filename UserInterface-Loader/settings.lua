@@ -101,5 +101,4 @@ function Data.new(name, data, FileName)
         __index = DataFunctions
     })
 end
-
 return Data

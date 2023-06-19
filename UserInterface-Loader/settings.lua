@@ -1,7 +1,6 @@
 local HttpService = game:GetService("HttpService")
 
 local Data = {}
-local FileName = "Settings.json"
 
 local DataFunctions = {}
 
@@ -14,7 +13,7 @@ function DataFunctions:Get(name)
     return self.data[name]
 end
 
-function Data.new(name, data)
+function Data.new(name, data, FileName)
     if not isfolder(name) then
         makefolder(name)
     end

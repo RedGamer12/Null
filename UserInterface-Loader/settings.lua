@@ -1,4 +1,4 @@
-local Http = game:GetService("HttpService")
+local HttpService = game:GetService("HttpService")
 
 local Data = {}
 local FileName = "Settings.json"
@@ -7,7 +7,7 @@ local DataFunctions = {}
 
 function DataFunctions:Set(name, value)
     self.data[name] = value
-    writefile(self.FolderName.."/"..self.FileName, Http:JSONEncode(self.data))
+    writefile(self.FolderName.."/"..self.FileName, HttpService:JSONEncode(self.data))
 end
 
 function DataFunctions:Get(name)
@@ -22,7 +22,7 @@ function Data.new(name, data)
     local FilePath = name.."/"..FileName
 
     if isfile(FilePath) then
-        local SavedData = Http:JSONDecode(readfile(FilePath))
+        local SavedData = HttpService:JSONDecode(readfile(FilePath))
         
         for i,v in pairs(data) do
             if not SavedData[i] then
@@ -32,7 +32,7 @@ function Data.new(name, data)
         
         Data[name] = SavedData
     else
-        writefile(FilePath, Http:JSONEncode(data))
+        writefile(FilePath, HttpService:JSONEncode(data))
         Data[name] = data
     end
     

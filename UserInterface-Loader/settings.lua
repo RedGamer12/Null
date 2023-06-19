@@ -3,9 +3,18 @@ local Http = game:GetService("HttpService")
 local Data = {}
 local FileName = "Settings.json"
 
+local DataFunctions = {}
+
+function DataFunctions:Set(name, value)
+	self.data[name] = value
+	writefile(self.FolderName.."/"..self.FileName, Http:JSONEncode(self.data))
+end
+
+function DataFunctions:Get(name)
+	return self.data[name]
+end
+
 function Data.new(name, data)
-	local self = {}
-	
 	if not isfolder(name) then
 		makefolder(name)
 	end
@@ -21,30 +30,19 @@ function Data.new(name, data)
 			end
 		end
 		
-		self[name] = SavedData
+		Data[name] = SavedData
 	else
 		writefile(FilePath, Http:JSONEncode(data))
-		self[name] = data
+		Data[name] = data
 	end
 	
 	return setmetatable({
 		FolderName = name,
 		FileName = FileName,
-		data = self[name]
+		data = Data[name]
 	}, {
 		__index = DataFunctions
 	})
-end
-
-local DataFunctions = {}
-
-function DataFunctions:Set(name, value)
-	self.data[name][value] = value
-	writefile(self.FolderName.."/"..self.FileName, Http:JSONEncode(self.data))
-end
-
-function DataFunctions:Get(name)
-	return self.data[name]
 end
 
 return Data

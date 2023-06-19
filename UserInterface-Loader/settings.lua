@@ -40,6 +40,10 @@ function Data.new(name, data, FileName)
     end
     
     --Add the adjustments to the structure of the table
+    if not Data[name] then
+        Data[name] = {}
+    end
+    
     if not Data[name]["Weapons"] then
         Data[name]["Weapons"] = {
             Melee = {

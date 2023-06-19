@@ -1,104 +1,53 @@
+local Data = {}
+local DataFunctions = {}
 local HttpService = game:GetService("HttpService")
 
-local Data = {}
-
-local DataFunctions = {}
-
-function DataFunctions:Set(name, value)
-    if not self.FolderName then
-        warn("Folder name is nil")
-    end
-    
-    if not self.FileName then
-        warn("File name is nil")
-    end
-    
-    if not self.FileName or not self.FolderName then
-        error("Invalid folder or file name")
-    end
-
-    self.data[name] = value
-    writefile(self.FolderName.."/"..self.FileName, HttpService:JSONEncode(self.data))
-end
-
-function DataFunctions:Get(name)
-    return self.data[name]
-end
-
-function Data.new(name, data, FileName)
+function Data.new(name, data, fileName)
     if not isfolder(name) then
         makefolder(name)
     end
 
-    local FilePath = name.."/"..FileName
+    local filePath = name .. "/" .. (fileName or "settings.json")
+    local savedData = isfile(filePath) and HttpService:JSONDecode(readfile(filePath))
 
-    if isfile(FilePath) then
-        local SavedData = HttpService:JSONDecode(readfile(FilePath))
-        
-        for i,v in pairs(data) do
-            if not SavedData[i] then
-                SavedData[i] = v
+    if savedData then
+        for key, value in pairs(data) do
+            if not savedData[key] then
+                savedData[key] = value
             end
         end
-        
-        Data[name] = SavedData
-    else
-        writefile(FilePath, HttpService:JSONEncode(data))
-        Data[name] = data
-    end
-    
-    --Add the adjustments to the structure of the table
-    if not Data[name] then
-        Data[name] = {}
-    end
-    
-    if not Data[name]["Weapons"] then
-        Data[name]["Weapons"] = {
-            Melee = {
-                Enable = true,
-                Delay = 0,
-                Skills = {
-                    Z = {Enable = false, HoldTime = 0},
-                    X = {Enable = false, HoldTime = 0},
-                    C = {Enable = false, HoldTime = 0}
-                }
-            },
-            BloxFruit = {
-                Enable = true,
-                Delay = 0,
-                Skills = {
-                    Z = {Enable = false, HoldTime = 0},
-                    X = {Enable = false, HoldTime = 0},
-                    C = {Enable = false, HoldTime = 0},
-                    V = {Enable = false, HoldTime = 0},
-                    F = {Enable = false, HoldTime = 0}
-                }
-            },
-            Gun = {
-                Enable = true,
-                Delay = 0,
-                Skills = {
-                    Z = {Enable = false, HoldTime = 0},
-                    X = {Enable = false, HoldTime = 0}
-                }
-            },
-            Sword = {
-                Enable = true,
-                Delay = 0,
-                Skills = {
-                    Z = {Enable = false, HoldTime = 0},
-                    X = {Enable = false, HoldTime = 0}
-                }
-            }
-        }
     end
 
     return setmetatable({
+        Data = savedData or data,
+        FileName = fileName or "settings.json",
         FolderName = name,
-        FileName = FileName,
-        data = Data[name]
     }, {
-        __index = DataFunctions
+        __index = Data,
     })
 end
-return Data
+
+function Data:Set(key, value)
+    self.Data[key] = value
+    writefile(self.FolderName .. "/" .. self.FileName, HttpService:JSONEncode(self.Data))
+end
+
+function Data:Get(key)
+    return self.Data[key]
+end
+
+function Data:Load()
+    local filePath = self.FolderName .. "/" .. self.FileName
+
+    if isfile(filePath) then
+        local success, result = pcall(function()
+            return HttpService:JSONDecode(readfile(filePath))
+        end)
+
+        if success then
+            self.Data = result or {}
+        else
+            warn("Error loading data: ", result)
+        end
+    end
+end

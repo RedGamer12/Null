@@ -4,6 +4,8 @@ local Data = {}
 local FileName = "Settings.json"
 
 function Data.new(name, data)
+	local self = {}
+	
 	if not isfolder(name) then
 		makefolder(name)
 	end
@@ -19,15 +21,16 @@ function Data.new(name, data)
 			end
 		end
 		
-		Data[name] = SavedData
+		self[name] = SavedData
 	else
 		writefile(FilePath, Http:JSONEncode(data))
-		Data[name] = data
+		self[name] = data
 	end
 	
 	return setmetatable({
 		FolderName = name,
-		FileName = FileName
+		FileName = FileName,
+		data = self[name]
 	}, {
 		__index = DataFunctions
 	})
@@ -36,12 +39,12 @@ end
 local DataFunctions = {}
 
 function DataFunctions:Set(name, value)
-	self[name][value] = value
-	writefile(self.FolderName.."/"..self.FileName, Http:JSONEncode(self[name]))
+	self.data[name][value] = value
+	writefile(self.FolderName.."/"..self.FileName, Http:JSONEncode(self.data))
 end
 
 function DataFunctions:Get(name)
-	return self[name]
+	return self.data[name]
 end
 
 return Data

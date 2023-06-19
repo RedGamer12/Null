@@ -5,8 +5,16 @@ local Data = {}
 local DataFunctions = {}
 
 function DataFunctions:Set(name, value)
+    if not self.FolderName then
+        warn("Folder name is nil")
+    end
+    
     if not self.FileName then
-        error("Invalid file name")
+        warn("File name is nil")
+    end
+    
+    if not self.FileName or not self.FolderName then
+        error("Invalid folder or file name")
     end
 
     self.data[name] = value

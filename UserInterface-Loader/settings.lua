@@ -5,6 +5,10 @@ local Data = {}
 local DataFunctions = {}
 
 function DataFunctions:Set(name, value)
+    if not self.FileName then
+        error("Invalid file name")
+    end
+
     self.data[name] = value
     writefile(self.FolderName.."/"..self.FileName, HttpService:JSONEncode(self.data))
 end

@@ -51,3 +51,4 @@ function Data:Load()
         end
     end
 end
+return Data

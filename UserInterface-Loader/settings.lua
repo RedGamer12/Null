@@ -7,7 +7,8 @@ function Data.new(name, data, fileName)
 		makefolder(name)
 	end
 
-	local filePath = name .. "/" .. (fileName or "settings.json")
+	fileName = fileName or "settings.json"
+	local filePath = name .. "/" .. fileName
     local savedData = isfile(filePath) and Http:JSONDecode(readfile(filePath))
     
     if savedData then
@@ -16,12 +17,15 @@ function Data.new(name, data, fileName)
                 savedData[i] = v
             end
         end
+    else
+        writefile(filePath, Http:JSONEncode(data))
+        savedData = data
     end
 
 	return setmetatable({
-		Data = savedData or data,
+		Data = savedData,
 		FolderName = name,
-        FileName = fileName or "settings.json"
+        FileName = fileName
 	}, {
 		__index = DataFunctions
 	})

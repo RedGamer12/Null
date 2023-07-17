@@ -81,7 +81,7 @@ local AimingSettings = {
     IgnoredCheck = true,
 
     HitChance = 100,
-    TargetPart = {"LowerTorso"},
+    TargetPart = {"LowerTorso", "UpperTorso"},
     RaycastIgnore = nil,
     Offset = Vector2new(),
     MaxDistance = 1500,
